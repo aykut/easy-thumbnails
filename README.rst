@@ -2,7 +2,7 @@
 Important Note
 ==============
 
-This is a fork of easy-thumbnails v1.4 and it has fixes for remote storage performance issues like querying to db for each
+This is a fork of easy-thumbnails v1.4 and it has fixes for remote storage(like amazon S3) performance issues like querying to db for each
 thumbnail or checking its existency and modified time on remote storage. It simply caches modified time of your 
 thumbnail with your default cache backend.
 
