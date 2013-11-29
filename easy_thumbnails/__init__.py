@@ -1,1 +1,1 @@
-VERSION = '1.4'
+VERSION = '-e git+https://github.com/aykutozat/easy-thumbnails.git#egg=easy-thumbnails'
