@@ -416,8 +416,7 @@ class Thumbnailer(File):
         if save:
             save_thumbnail(thumbnail, self.thumbnail_storage)
             # BEGIN: cache thumbnail modified time
-            utils.get_modified_time(self.thumbnail_storage, thumbnail.name,
-                                    'thumbnail')
+            utils.invalidate_easy_cache(thumbnail.name)
             # END:
             signals.thumbnail_created.send(sender=thumbnail)
             # Ensure the right thumbnail name is used based on the transparency
@@ -431,8 +430,7 @@ class Thumbnailer(File):
                                                        high_resolution=True)
                 save_thumbnail(thumbnail_2x, self.thumbnail_storage)
                 # BEGIN: cache thumbnail modified time
-                utils.get_modified_time(
-                    self.thumbnail_storage_2x, thumbnail.name, 'thumbnail')
+                utils.invalidate_easy_cache(thumbnail.name)
                 # END:
         return thumbnail
 
