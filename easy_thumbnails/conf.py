@@ -245,4 +245,21 @@ class Settings(AppSettings):
     layer to display higher quality thumbnails for high DPI displays.
     """
 
+    THUMBNAIL_REMOTE_STORAGE = False
+    """
+    If this is true that means easy_thumbnails assume you are working with
+    remote storages for thumbnails.
+    """
+
+    FILE_REMOTE_STORAGE = False
+    """
+    If this is true that means easy_thumbnails assume you are working with
+    remote storages for your default storage.
+    """
+
+    EASY_CACHE_TIMEOUT = 60 * 60 * 24 * 30
+    """
+    Default is 30 days to cache modified time of images.
+    """
+
 settings = Settings()

@@ -5,7 +5,7 @@ from django.core.files.base import File, ContentFile
 from django.core.files.storage import (
     get_storage_class, default_storage, Storage)
 from django.db.models.fields.files import ImageFieldFile, FieldFile
-from django.core.cache import cache
+
 from django.utils.safestring import mark_safe
 from django.utils.html import escape
 
@@ -415,13 +415,9 @@ class Thumbnailer(File):
         thumbnail = self.generate_thumbnail(thumbnail_options)
         if save:
             save_thumbnail(thumbnail, self.thumbnail_storage)
-            # BEGIN: cache thumbnail modified time and exists
-            exists_key, mod_key = self.get_thumbnail_keys(thumbnail.name)
-            exists = self.thumbnail_storage.exists(thumbnail.name)
-            modified_time = self.thumbnail_storage.modified_time(
-                thumbnail.name)
-            self.cache_value(mod_key, modified_time)
-            self.cache_value(exists_key, exists)
+            # BEGIN: cache thumbnail modified time
+            utils.get_modified_time(self.thumbnail_storage, thumbnail.name,
+                                    'thumbnail')
             # END:
             signals.thumbnail_created.send(sender=thumbnail)
             # Ensure the right thumbnail name is used based on the transparency
@@ -434,14 +430,9 @@ class Thumbnailer(File):
                 thumbnail_2x = self.generate_thumbnail(thumbnail_options,
                                                        high_resolution=True)
                 save_thumbnail(thumbnail_2x, self.thumbnail_storage)
-                # BEGIN: cache thumbnail modified time and exists
-                exists_key, mod_key = self.get_thumbnail_keys(
-                    thumbnail_2x.name)
-                exists = self.thumbnail_storage.exists(thumbnail_2x.name)
-                modified_time = self.thumbnail_storage.modified_time(
-                    thumbnail_2x.name)
-                self.cache_value(mod_key, modified_time)
-                self.cache_value(exists_key, exists)
+                # BEGIN: cache thumbnail modified time
+                utils.get_modified_time(
+                    self.thumbnail_storage_2x, thumbnail.name, 'thumbnail')
                 # END:
         return thumbnail
 
@@ -513,65 +504,13 @@ class Thumbnailer(File):
             storage=self.thumbnail_storage, source=source, name=thumbnail_name,
             check_cache_miss=self.thumbnail_check_cache_miss)
 
-    def get_source_keys(self):
-        return 'easy:source:' + self.name + ':exists', \
-               'easy:source:' + self.name + ':modtime'
-
-    def get_thumbnail_keys(self, thumbnail_name):
-        return 'easy:thumbnail:' + thumbnail_name + ':exists', \
-               'easy:thumbnail:' + thumbnail_name + ':modtime'
-
-    def fetch_value(self, key):
-        return cache.get(key)
-
-    def cache_value(self, key, value, timeout=60 * 60 * 24 * 30):
-        return cache.set(key, value, timeout)
-
-    def has_key(self, key):
-        return cache.has_key(key)  # noqa
-
     def get_source_modtime(self):
-        exists_key, mod_key = self.get_source_keys()
-        in_cache = self.has_key(exists_key)  # noqa
-        if in_cache:
-            exists = self.fetch_value(exists_key)
-        else:
-            exists = self.source_storage.exists(self.name)
-
-        if not exists:
-            return 0
-        else:
-            if not in_cache:
-                self.cache_value(exists_key, exists)
-
-            fetched_value = self.fetch_value(mod_key)
-            if fetched_value:
-                return fetched_value
-            modified_time = self.source_storage.modified_time(self.name)
-            self.cache_value(mod_key, modified_time)
-            return modified_time
+        return utils.get_modified_time(self.source_storage, self.name,
+                                       'source')
 
     def get_thumbnail_modtime(self, thumbnail_name):
-        exists_key, mod_key = self.get_thumbnail_keys(thumbnail_name)
-        in_cache = cache.has_key(exists_key)  # noqa
-        if in_cache:
-            exists = self.fetch_value(exists_key)
-        else:
-            exists = self.thumbnail_storage.exists(thumbnail_name)
-
-        if not exists:
-            return 0
-        else:
-            if not in_cache:
-                self.cache_value(exists_key, exists)
-
-            fetched_value = self.fetch_value(mod_key)
-            if fetched_value:
-                return fetched_value
-            modified_time = self.thumbnail_storage.modified_time(
-                thumbnail_name)
-            self.cache_value(mod_key, modified_time)
-            return modified_time
+        return utils.get_modified_time(self.thumbnail_storage, thumbnail_name,
+                                       'thumbnail')
 
     def open(self, mode=None):
         if self.closed:

@@ -20,15 +20,12 @@ try:
     from django.utils import timezone
     now = timezone.now
 
-    def fromtimestamp(timestamp):
-        if isinstance(timestamp, datetime.datetime):
-            dt = timestamp
-        else:
-            dt = datetime.datetime.fromtimestamp(timestamp)
-        if getattr(settings, 'USE_TZ', False):
-            default_timezone = timezone.get_default_timezone()
-            return timezone.make_aware(dt, default_timezone)
-        return dt
+    def fromtimestamp(modified_time):
+        if modified_time and timezone.is_naive(modified_time):
+            if getattr(settings, 'USE_TZ', False):
+                default_timezone = timezone.get_default_timezone()
+                return timezone.make_aware(modified_time, default_timezone)
+        return modified_time
 
 except ImportError:
     now = datetime.datetime.now
@@ -79,17 +76,6 @@ def valid_processor_options(processors=None):
         # Add all arguments apart from the first (the source image).
         valid_options.update(args[1:])
     return list(valid_options)
-
-
-def is_storage_local(storage):
-    """
-    Check to see if a file storage is local.
-    """
-    try:
-        storage.path('test')
-    except NotImplementedError:
-        return False
-    return True
 
 
 def get_storage_hash(storage):
@@ -147,10 +133,64 @@ def exif_orientation(im):
     return im
 
 
+def is_source_storage_remote():
+    return settings.FILE_REMOTE_STORAGE
+
+
+def is_thumbnail_storage_remote():
+    return settings.THUMBNAIL_REMOTE_STORAGE
+
+
+def get_cache_timeout():
+    return settings.EASY_CACHE_TIMEOUT
+
+
+def fetch_value(key):
+        return cache.get(key)
+
+
+def cache_value(key, value):
+    return cache.set(key, value, get_cache_timeout())
+
+
+def get_cache_key(name, image_type):
+    return ':'.join(['easy', image_type, name])
+
+
+def get_modified_time(storage, name, image_type):
+    IMAGE_TYPES = {
+        'source': {
+            'is_remote': is_source_storage_remote(),
+            'key': get_cache_key(name, image_type)
+        },
+        'thumbnail': {
+            'is_remote': is_thumbnail_storage_remote(),
+            'key': get_cache_key(name, image_type)
+        }
+    }
+
+    try:
+        if IMAGE_TYPES[image_type]['is_remote']:
+            key = IMAGE_TYPES[image_type]['key']
+            modified_time = fetch_value(key)
+            if modified_time is None:
+                modified_time = storage.modified_time(name)
+                cache_value(key, modified_time)
+        else:
+            modified_time = storage.modified_time(name)
+
+        return modified_time
+    except OSError:
+        return 0
+    except AttributeError:
+        return 0
+    except NotImplementedError:
+        return None
+
+
 def invalidate_easy_cache(source_image):
     keys = []
     if source_image and isinstance(source_image, six.string_types):
-        exists_key = 'easy:*' + source_image + '*:exists'
-        mod_key = 'easy:*' + source_image + '*:modtime'
-        keys = cache.keys(exists_key) + cache.keys(mod_key)
+        keys = [get_cache_key(source_image, 'source'),
+                get_cache_key(source_image, 'thumbnail')]
     cache.delete_many(keys)
