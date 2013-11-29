@@ -1,3 +1,33 @@
+==============
+Important Note
+==============
+
+This is a fork of easy-thumbnails v1.4 and it has fixes for remote storage performance issues like querying to db for each
+thumbnail or checking its existency and modified time on remote storage. It simply caches modified time of your 
+thumbnail with your default cache backend.
+
+It supposed to work fine for local storages too. It includes three more settings than original easy-thumbnails package.
+
+``FILE_REMOTE_STORAGE = False`` default is false but if you are using remote storages for your ``DEFAULT_FILE_STORAGE``, 
+you definitely need to set it to True. Otherwise, it will still solve the "querying to db" problem but keep requesting
+the modified time to remote storage instead of caching it on your cache backend.
+
+``THUMBNAIL_REMOTE_STORAGE = False`` default is false but if you are using remote storages for your 
+``THUMBNAIL_DEFAULT_STORAGE``, you definitely need to set it to True. Otherwise, it will still solve the 
+"querying to db" problem but keep requesting the modified time to remote storage instead of caching it on your 
+cache backend.
+
+``EASY_CACHE_TIMEOUT = 60 * 60 * 24 * 30`` default is 30 days for caching ``modified_time`` of source image or 
+thumbnail image.
+
+``Invalidation``:
+There are few cases for invalidations. For example, if your image is replaced with a different named image, then you don't 
+need to invalidate cache necessarily. However, if your image is replaced with same name but different quality, then
+cache needs to be invalidated definitely. For this purpose, there is a function called ``invalidate_easy_cache`` 
+under ``utils.py``. It consumes only source image name.
+
+
+
 ===============
 Easy Thumbnails
 ===============
