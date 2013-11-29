@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 from setuptools import setup, find_packages
-import easy_thumbnails
 
 
 def read_files(*filenames):
@@ -19,8 +18,8 @@ def read_files(*filenames):
 
 setup(
     name='easy-thumbnails',
-    version=easy_thumbnails.VERSION,
-    url='http://github.com/SmileyChris/easy-thumbnails',
+    version='1.4.metglobal',
+    url='http://github.com/aykutozat/easy-thumbnails',
     description='Easy thumbnails for Django',
     long_description=read_files('README.rst', 'CHANGES.rst'),
     author='Chris Beaven',
