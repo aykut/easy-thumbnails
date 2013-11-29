@@ -191,6 +191,6 @@ def get_modified_time(storage, name, image_type):
 def invalidate_easy_cache(source_image):
     keys = []
     if source_image and isinstance(source_image, six.string_types):
-        keys = [get_cache_key('source', source_image),
-                get_cache_key('thumbnail', source_image)]
+        keys = [get_cache_key(source_image, 'source'),
+                get_cache_key(source_image, 'thumbnail')]
     cache.delete_many(keys)
