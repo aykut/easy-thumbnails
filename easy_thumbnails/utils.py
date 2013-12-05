@@ -157,7 +157,7 @@ def get_cache_key(name, image_type):
     return ':'.join(['easy', image_type, name])
 
 
-def get_modified_time(storage, name, image_type, force_fetch_cache=False):
+def get_modified_time(storage, name, image_type, force_cache_result=False):
     IMAGE_TYPES = {
         'source': {
             'is_remote': is_source_storage_remote(),
@@ -173,7 +173,7 @@ def get_modified_time(storage, name, image_type, force_fetch_cache=False):
         if IMAGE_TYPES[image_type]['is_remote']:
             key = IMAGE_TYPES[image_type]['key']
             modified_time = fetch_value(key)
-            if force_fetch_cache:
+            if force_cache_result:
                 return modified_time
             if modified_time is None:
                 modified_time = storage.modified_time(name)
