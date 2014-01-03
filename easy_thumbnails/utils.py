@@ -195,5 +195,5 @@ def invalidate_easy_cache(source_image):
     if source_image and isinstance(source_image, six.string_types):
         keys = [get_cache_key(source_image + '*', 'source'),
                 get_cache_key(source_image + '*', 'thumbnail')]
-    cache.delete_pattern(keys[0])
-    cache.delete_pattern(keys[1])
+        cache.delete_pattern(keys[0])
+        cache.delete_pattern(keys[1])
